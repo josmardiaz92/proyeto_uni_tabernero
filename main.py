@@ -1,10 +1,22 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox as msg
 from PIL import Image, ImageTk
 
+
 from pathlib import Path
+from typing import Any
 
 BASE = Path(__file__).parent
+estilo_boton = dict[str, Any](
+    bg="#4e3525",
+    fg="#D7A36B",
+    activebackground="#3A2719",
+    activeforeground="#D7A36B",
+    relief="flat",
+    bd=0,
+    highlightthickness=0,
+    cursor="hand2"
+)
 
 
 def mostrar_respuesta(respuesta):
@@ -33,10 +45,66 @@ def salto_linea(event=None):
     cuadro_texto.insert(tk.INSERT, "\n")
     return "break"
 
+def confirmar_cierre():
+    dialogo = tk.Toplevel(ventana)
+    dialogo.title("Salir")
+    dialogo.configure(
+        bg="#8B5A2B",
+        padx=20,
+        pady=15
+    )
+    dialogo.resizable(False,False)
+    dialogo.transient(ventana)
+    dialogo.grab_set()
+    dialogo.focus_set()
+
+    tk.Label(
+        dialogo,
+        text="¿Seguro que deseas abandonar la taberna?",
+        bg="#8B5A2B",
+        fg="#2B120B",
+        font=("Georgia", 12, "bold")
+    ).pack(pady=(0, 15))
+
+    botones = tk.Frame(dialogo, bg="#8B5A2B")
+    botones.pack()
+
+    tk.Button(
+        botones,
+        text="Si",
+        width=8,
+        command=ventana.destroy,
+        **estilo_boton).pack(side="left", padx=5)
+    tk.Button(
+        botones,
+        text="No",
+        width=8,
+        command=dialogo.destroy,
+        **estilo_boton).pack(side="left", padx=5)
+
+    dialogo.bind("<Escape>", lambda e: dialogo.destroy())
+    dialogo.bind("<Return>", lambda e: ventana.destroy())
+    dialogo.bind("<KP_Enter>", lambda e: ventana.destroy())
+
+    dialogo.update_idletasks()
+    x = ventana.winfo_x() + (ventana.winfo_width() - dialogo.winfo_width()) //2
+    y = ventana.winfo_y() + (ventana.winfo_height() - dialogo.winfo_height()) //2
+    dialogo.geometry(f"+{x}+{y}")
+    """ if msg.askyesno(
+        "Salir", 
+        "¿Seguro que deseas abandonar la taberna?",
+        detail="El tabernero te echará de menos...",
+        icon="question",
+        default="no",
+        parent=ventana
+    ):
+        ventana.destroy() """
+
 ventana = tk.Tk()
 ventana.title("La Taberna")
-
 ventana.geometry("960x540+290+130")
+ventana.resizable(False,False)
+ventana.protocol("WM_DELETE_WINDOW", confirmar_cierre)
 
 estilo = ttk.Style()
 estilo.theme_use("clam")
@@ -66,7 +134,6 @@ estilo.layout("Taberna.Vertical.TScrollbar", [
         })
     ]
 )
-
 
 imagen = Image.open(BASE / "fondo.jpg")
 imagen = imagen.resize((960, 540))
@@ -138,15 +205,22 @@ cuadro_texto = tk.Text(
     highlightcolor="#7A4A2A"
 )
 cuadro_texto.place(x=20, y=400, relwidth=0.8)
+
+
+""" ----------- EVENTOS ----------- """
+
+cuadro_texto.focus_set()
 cuadro_texto.bind("<Shift-Return>", salto_linea)
 cuadro_texto.bind("<Shift-KP_Enter>", salto_linea)
 cuadro_texto.bind("<Return>", enviar_texto)
 cuadro_texto.bind("<KP_Enter>", enviar_texto)
 
-boton_enviar = tk.Button(ventana, text="Enviar",bg="#4E3525", command=enviar_texto)
+ventana.bind("<Escape>", lambda e: confirmar_cierre())
+
+boton_enviar = tk.Button(ventana, text="Enviar", width=10, command=enviar_texto, **estilo_boton)
 boton_enviar.place(x=20, y=510)
 
-boton_limpiar = tk.Button(ventana, text="Limpiar",bg="#4E3525", command=limpiar_texto)
+boton_limpiar = tk.Button(ventana, text="Limpiar", width=10, command=limpiar_texto, **estilo_boton)
 boton_limpiar.place(x=100, y=510)
 
 ventana.mainloop()
