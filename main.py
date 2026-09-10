@@ -1,10 +1,13 @@
 import tkinter as tk
-from tkinter import ttk, messagebox as msg
+from tkinter import ttk
 from PIL import Image, ImageTk
 
 
 from pathlib import Path
 from typing import Any
+import sys
+import ctypes
+
 
 BASE = Path(__file__).parent
 estilo_boton = dict[str, Any](
@@ -17,6 +20,9 @@ estilo_boton = dict[str, Any](
     highlightthickness=0,
     cursor="hand2"
 )
+
+if sys.platform == "win32":
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("uptaiet.taberna")
 
 
 def mostrar_respuesta(respuesta):
@@ -49,7 +55,7 @@ def confirmar_cierre():
     dialogo = tk.Toplevel(ventana)
     dialogo.title("Salir")
     dialogo.configure(
-        bg="#8B5A2B",
+        bg="#C78D5D",
         padx=20,
         pady=15
     )
@@ -61,12 +67,12 @@ def confirmar_cierre():
     tk.Label(
         dialogo,
         text="¿Seguro que deseas abandonar la taberna?",
-        bg="#8B5A2B",
+        bg="#C78D5D",
         fg="#2B120B",
         font=("Georgia", 12, "bold")
     ).pack(pady=(0, 15))
 
-    botones = tk.Frame(dialogo, bg="#8B5A2B")
+    botones = tk.Frame(dialogo, bg="#C78D5D")
     botones.pack()
 
     tk.Button(
@@ -138,6 +144,9 @@ estilo.layout("Taberna.Vertical.TScrollbar", [
 imagen = Image.open(BASE / "fondo.jpg")
 imagen = imagen.resize((960, 540))
 imagen_fondo = ImageTk.PhotoImage(imagen)
+
+icono = tk.PhotoImage(file=BASE / "icono.png")
+ventana.iconphoto(True, icono)
 
 label_fondo = tk.Label(ventana, image=imagen_fondo)
 label_fondo.place(x=0, y=0, relwidth=1, relheight=1)
