@@ -37,6 +37,7 @@ chat = cliente.chats.create(
     config=types.GenerateContentConfig(
         system_instruction=INSTRUCCIONES,
         temperature=0.9,
+        thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.MINIMAL),
     ),
 )
 
