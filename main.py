@@ -1,5 +1,11 @@
 import tkinter as tk
+from tkinter import ttk
 from PIL import Image, ImageTk
+
+from pathlib import Path
+
+BASE = Path(__file__).parent
+
 
 def mostrar_respuesta(respuesta):
     cuadro_tabernero.configure(state=tk.NORMAL)
@@ -8,32 +14,61 @@ def mostrar_respuesta(respuesta):
     cuadro_tabernero.configure(state=tk.DISABLED)
 
 
-def enviar_texto():
+def enviar_texto(event=None):
     texto = cuadro_texto.get("1.0", tk.END).strip()
 
     if texto:
         print("Texto enviado:")
         print(texto)
         print("-" * 20)
-
-    
+        limpiar_texto()
     else:
         print("El campo está vacío.")
-
-def enviar_con_enter(event=None):
-    enviar_texto()
     return "break"
 
 def limpiar_texto():
     cuadro_texto.delete("1.0", tk.END)
+
+def salto_linea(event=None):
+    cuadro_texto.insert(tk.INSERT, "\n")
+    return "break"
 
 ventana = tk.Tk()
 ventana.title("La Taberna")
 
 ventana.geometry("960x540+290+130")
 
+estilo = ttk.Style()
+estilo.theme_use("clam")
+estilo.configure(
+    "Taberna.Vertical.TScrollbar",
+    troughcolor="#C78D5D",
+    background="#4B2C18",
+    bordercolor="#C78D5D",
+    lightcolor="#4B2C18",
+    darkcolor="#4B2C18",
+    arrowcolor="#C78D5D",
+    arrowsize=5,
+    gripcount=0
+)
+estilo.map(
+    "Taberna.Vertical.TScrollbar",
+    background=[("active","#2B120B"),("pressed", "#2B120B")]
+)
+estilo.layout("Taberna.Vertical.TScrollbar", [
+    ("Vertical.Scrollbar.trough", {
+            "sticky": "ns",
+            "children": [
+                ("Vertical.Scrollbar.thumb", {
+                    "sticky": "nswe"
+                })
+            ]
+        })
+    ]
+)
 
-imagen = Image.open("fondo.jpg")
+
+imagen = Image.open(BASE / "fondo.jpg")
 imagen = imagen.resize((960, 540))
 imagen_fondo = ImageTk.PhotoImage(imagen)
 
@@ -76,23 +111,18 @@ cuadro_tabernero.pack(side="left", fill="both", expand=True)
 cuadro_tabernero.insert("1.0", "Bienvenido a mi taberna. ¿En qué os puedo ayudar, noble aventurero?")
 cuadro_tabernero.configure(state=tk.DISABLED)
 
-scroll_tabernero = tk.Scrollbar(
+scroll_tabernero = ttk.Scrollbar(
     panel_tabernero,
     orient="vertical",
     command=cuadro_tabernero.yview,
-    troughcolor="#D7A36B",
-    activebackground="#4B2C18",
-    bg="#C78D5D",
-    width=10,
-    highlightthickness=0,
-    bd=0
+    style="Taberna.Vertical.TScrollbar"
 )
 scroll_tabernero.pack(side="right", fill="y")
 cuadro_tabernero.config(yscrollcommand=scroll_tabernero.set)
 
 cuadro_texto = tk.Text(
     ventana,
-    height=2,
+    height=4,
     width=33,
     wrap=tk.WORD,
     borderwidth=0,
@@ -107,9 +137,11 @@ cuadro_texto = tk.Text(
     highlightbackground="#7A4A2A",
     highlightcolor="#7A4A2A"
 )
-cuadro_texto.place(x=20, y=445)
-cuadro_texto.bind("<Return>", enviar_con_enter)
-cuadro_texto.bind("<KP_Enter>", enviar_con_enter)
+cuadro_texto.place(x=20, y=400, relwidth=0.8)
+cuadro_texto.bind("<Shift-Return>", salto_linea)
+cuadro_texto.bind("<Shift-KP_Enter>", salto_linea)
+cuadro_texto.bind("<Return>", enviar_texto)
+cuadro_texto.bind("<KP_Enter>", enviar_texto)
 
 boton_enviar = tk.Button(ventana, text="Enviar",bg="#4E3525", command=enviar_texto)
 boton_enviar.place(x=20, y=510)
