@@ -8,8 +8,42 @@ from typing import Any
 import sys
 import ctypes
 
+import os
+import threading
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types, errors
+
+import pyttsx3
+
 
 BASE = Path(__file__).parent
+load_dotenv(BASE / ".env")
+
+if not os.getenv("GEMINI_API_KEY"):
+    raise SystemExit("Falta GEMINI_API_KEY en el archivo .env")
+
+MODELO = "gemini-3.6-flash"
+INSTRUCCIONES = (
+    "Eres Bartolo, el tabernero de una posada medieval. "
+    "Hablas en español con tono cálido y antiguo (vos, os, noble, aventurero). "
+    "Responde breve, maximo 3 o 4 frases. "
+    "Nunca rompes el personaje ni dices que eres una IA."
+)
+
+cliente = genai.Client()
+chat = cliente.chats.create(
+    model=MODELO,
+    config=types.GenerateContentConfig(
+        system_instruction=INSTRUCCIONES,
+        temperature=0.9,
+    ),
+)
+
+
+esperando = False
+
+
 estilo_boton = dict[str, Any](
     bg="#4e3525",
     fg="#D7A36B",
@@ -33,16 +67,39 @@ def mostrar_respuesta(respuesta):
 
 
 def enviar_texto(event=None):
+    global esperando
     texto = cuadro_texto.get("1.0", tk.END).strip()
+    if not texto or esperando:
+        return "break"
 
-    if texto:
-        print("Texto enviado:")
-        print(texto)
-        print("-" * 20)
-        limpiar_texto()
-    else:
-        print("El campo está vacío.")
+    esperando = True
+    limpiar_texto()
+    boton_enviar.config(state=tk.DISABLED)
+    mostrar_respuesta("El tabernero se rasca la barba y piensa....")
+
+    threading.Thread(target=preguntar_tabernero, args=(texto,),daemon=True).start()
     return "break"
+
+def preguntar_tabernero(texto):
+    try:
+        respuesta = chat.send_message(texto)
+        resultado = respuesta.text or "El tabernero te mira en silencio..."
+    except errors.APIError as e:
+        resultado = f"(Error {e.code}: {e.message})"
+    except Exception as e:
+        resultado = f"(Error de conexion: {e})"
+    ventana.after(0, recibir_respuesta, resultado)
+    hablar(resultado)
+    ventana.after(0, terminar_espera)
+
+def terminar_espera():
+    global esperando
+    esperando = False
+    boton_enviar.config(state=tk.NORMAL)
+    cuadro_texto.focus_set()
+    
+def recibir_respuesta(resultado):
+    mostrar_respuesta(resultado)
 
 def limpiar_texto():
     cuadro_texto.delete("1.0", tk.END)
@@ -106,6 +163,11 @@ def confirmar_cierre():
     ):
         ventana.destroy() """
 
+def hablar(texto):
+    motor = pyttsx3.init()
+    motor.setProperty("rate", 160)
+    motor.say(texto)
+    motor.runAndWait()
 ventana = tk.Tk()
 ventana.title("La Taberna")
 ventana.geometry("960x540+290+130")

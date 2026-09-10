@@ -1,8 +1,6 @@
 # La Taberna
 
-Aplicación de escritorio en Python donde el usuario conversa con un tabernero medieval. La interfaz está hecha con `tkinter` y el tabernero responderá usando **Google Gemini** como motor de inteligencia artificial.
-
-> **Estado:** en desarrollo. La interfaz gráfica está lista; la integración con Google Gemini está pendiente.
+Aplicación de escritorio en Python donde el usuario conversa con Bartolo, un tabernero medieval. La interfaz está hecha con `tkinter`, las respuestas las genera **Google Gemini** y el tabernero las lee en voz alta con `pyttsx3`.
 
 ## Contexto académico
 
@@ -17,19 +15,31 @@ Aplicación de escritorio en Python donde el usuario conversa con un tabernero m
 
 ## Características
 
-- Ventana con fondo ambientado en una taberna.
+- Conversación con el tabernero usando Google Gemini (modelo `gemini-3.6-flash`), manteniendo el historial del chat durante la sesión.
+- El tabernero no rompe el personaje: responde en español antiguo, en 3 o 4 frases.
+- Lectura en voz alta de cada respuesta (texto a voz sin conexión, con las voces del sistema).
+- La consulta a la IA corre en un hilo aparte, así la ventana no se congela mientras espera.
+- Ventana con fondo ambientado en una taberna e icono propio.
 - Panel de diálogo del tabernero con scroll personalizado.
-- Cuadro de entrada para escribir mensajes.
-- Botones para enviar y limpiar el mensaje.
+- Cuadro de entrada para escribir mensajes, con botones para enviar y limpiar.
+- Diálogo de confirmación al cerrar la ventana.
 - Atajos de teclado:
   - `Enter`: enviar el mensaje.
   - `Shift + Enter`: salto de línea.
+  - `Escape`: salir (pide confirmación).
 
 ## Requisitos
 
-- Python 3.10 o superior, con `tkinter` incluido.
+- Python 3.10 o superior, con `tkinter` incluido (probado con Python 3.14).
 - Git.
-- Dependencias listadas en `requirements.txt` (Pillow).
+- Una clave de API de Google Gemini, que se obtiene gratis en [Google AI Studio](https://aistudio.google.com/apikey).
+- Dependencias listadas en `requirements.txt`. Las principales son:
+  - `google-genai`: cliente de Google Gemini.
+  - `python-dotenv`: carga la clave desde el archivo `.env`.
+  - `pillow`: carga y escala la imagen de fondo.
+  - `pyttsx3`: texto a voz.
+
+  En Windows también se instalan `pywin32`, `pypiwin32` y `comtypes`, que `pyttsx3` necesita para usar las voces del sistema. En Linux y macOS se omiten solos.
 
 ## Clonar y ejecutar
 
@@ -40,6 +50,7 @@ git clone https://github.com/josmardiaz92/proyeto_uni_tabernero.git
 cd proyeto_uni_tabernero
 python -m venv venv
 venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
 venv\Scripts\python.exe main.py
 ```
 
@@ -50,18 +61,30 @@ git clone https://github.com/josmardiaz92/proyeto_uni_tabernero.git
 cd proyeto_uni_tabernero
 python3 -m venv venv
 venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
 venv/bin/python main.py
 ```
 
-La carpeta `venv` no se sube al repositorio; cada equipo debe crear la suya con los pasos anteriores.
+Antes de ejecutar `main.py`, abre `.env` y reemplaza `aqui_va_la_clave` con tu clave:
+
+```
+GEMINI_API_KEY=tu_clave_de_gemini
+```
+
+Si falta la clave, el programa se cierra con el mensaje `Falta GEMINI_API_KEY en el archivo .env`.
+
+Las carpetas `venv` y el archivo `.env` no se suben al repositorio; cada equipo debe crear los suyos con los pasos anteriores. No compartas tu clave de API.
 
 ## Estructura
 
 ```
 proyeto_uni_tabernero/
-├── main.py            # Interfaz y lógica de la aplicación
+├── main.py            # Interfaz, conexión con Gemini y texto a voz
 ├── fondo.jpg          # Imagen de fondo
+├── icono.png          # Icono de la ventana
 ├── requirements.txt   # Dependencias de Python
+├── .env.example        # Plantilla del archivo .env
+├── .gitignore
 └── README.md
 ```
 
@@ -74,4 +97,11 @@ proyeto_uni_tabernero/
   ```bash
   sudo apt install python3-tk
   ```
+- **Voz en Linux:** `pyttsx3` necesita `espeak-ng`, por ejemplo en Debian/Ubuntu:
+  ```bash
+  sudo apt install espeak-ng
+  ```
+- **Acento de la voz:** `pyttsx3` usa la voz predeterminada del sistema. Si no hay una voz en español instalada, el tabernero lee el texto con acento inglés.
+- **Botón "Enviar" bloqueado durante la voz:** el botón se reactiva cuando el tabernero termina de hablar, no cuando aparece la respuesta.
+- **Errores de la API:** si la clave es inválida, se agota la cuota o no hay internet, el error aparece en el panel del tabernero (por ejemplo `(Error 429: ...)`).
 - **Escalado de pantalla:** la ventana tiene tamaño y posición fijos (960x540). Con escalado de Windows alto (150 % o más) o pantallas pequeñas puede quedar descentrada o cortada.
